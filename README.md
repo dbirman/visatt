@@ -1,5 +1,39 @@
 # visatt
 
+conda create -n py3att python=3.6.5 anaconda
+
+source activate py3att
+
+# useful reading
+
+2017 model to do eye fixation prediction, basically VGG with some weird bias layers on top
+Kruthiventi, S. S., Ayush, K., & Babu, R. V. (2017). Deepfix: A fully convolutional neural network for predicting human eye fixations. IEEE Transactions on Image Processing, 26(9), 4446-4456.
+
+Early 2015 model to do eye fixation prediction, fixation-centered with variable image sizes, much closer to what you want to do
+Liu, N., Han, J., Zhang, D., Wen, S., & Liu, T. (2015, June). Predicting eye fixations using convolutional neural networks. In Computer Vision and Pattern Recognition (CVPR), 2015 IEEE Conference on (pp. 362-370). IEEE.
+
+# initial data
+
+Download from: http://www.inb.uni-luebeck.de/fileadmin/files/MITARBEITER/Dorr/EyeMovementDataSet.html
+
+Video frames with eye tracking
+
+# model spec
+
+Take an original video and eye-tracking data
+For each frame crop crop the video into 128x128, 256x256, and 512x512 pixel views, compressed to 64x64. 
+Each view gets passed through a conv/relu/pool layer four times (64x64->32x32->16x16->8x8) with K kernels at each layer (16 maybe?) and all convolutions at 3x3
+The final layer 8x8x16x3 gets concatenated to 8x8x48 and deconvolved to a 64x64 map in two steps (8x8x48->16x16x16->64x64x1)
+Final output is logistic not relu
+The output is compared to a gaussian-blurred map of the eye position in the window +175ms to +225 ms (center can be shifted but by default 200 ms)
+
+Cross-entropy loss
+
+Pre-train convolutional layers on imagenet with FC layers on the back end, this approximates alexnet but one very small images. 
+Train a base model first on free-viewing data
+Re-train model for active viewing (e.g. search for people, etc)
+
+
 # datasets
 
 Each dataset is pulled and stored in 
