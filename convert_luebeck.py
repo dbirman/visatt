@@ -25,7 +25,9 @@
 import cv2
 import numpy as np
 import skimage as sk
+from skimage.transform import resize
 from skimage.io import imsave
+from skimage.filters import gaussian
 
 videos = ['beach']
 observers = ['AAF']
@@ -60,7 +62,12 @@ def gazeMap(gaze,x,y,ctime,ftime,tmin,tmax,blur):
 	future_gazes[future_gazes>=x] = x-1
 	for row in future_gazes:
 		gaze_map[row[0],row[1]]=gaze_map[row[0],row[1]]+1
-	gaze_map = (gaze_map*255/np.sum(gaze_map)).astype('uint8')
+	# before returning blur the map with gaussians
+	if blur>0:
+		gaze_map = gaussian(gaze_map, sigma=blur, preserve_range=True).astype('uint8')
+		print(gaze_map)
+	gaze_map = (gaze_map*255/np.max(gaze_map)).astype('uint8')
+	# set the maximum value to 1
 	return gaze_map
 
 def getCrop(frame,cgaze,sz):
@@ -71,6 +78,11 @@ def getCrop(frame,cgaze,sz):
 	cgaze = np.round(cgaze+pad).astype('int')
 	crop = pframe[(cgaze[0]-pad):(cgaze[0]+pad),(cgaze[1]-pad):(cgaze[1]+pad),:]
 	# scikit image probably has a simple way of doing this
+	#
+	# before returning reduce the size by blurring to the middle size
+	if not sz == cropSizes[1]:
+		# for some stupid reason skimage.transform.resize resets the range to [0 1] instead of maintaing...
+		crop = resize(crop,(cropSizes[1],cropSizes[1]),preserve_range=True).astype('uint8')
 	return crop
 
 # MAIN CODE
@@ -117,12 +129,12 @@ for video in videos:
 				if dist>minJump:
 					print('Frame distance ' + np.str(dist) + ' exceeds jump of ' + str(minJump))
 					# get the gaze map from 200 ms in the future
-					gMap = gazeMap(gaze,cropSizes[1],cropSizes[1],timestamp,timestamp+saccadeTime,gmin,gmax,False)
-					imsave('data/out/gaze_'+video+'_'+obs+'_'+str(timestamp)+'_200.tiff',gMap*255)
+					gMap = gazeMap(gaze,cropSizes[1],cropSizes[1],timestamp,timestamp+saccadeTime,gmin,gmax,25)
+					imsave('data/out/gaze_'+video+'_'+str(round(timestamp))+'_'+obs+'_200.tiff',gMap*255)
 					# save the gaze cropped original images and the gaze map from 200 ms in the future
 					for cropSize in cropSizes:
 						crop = getCrop(frame,avgNow,cropSize)
-						imsave('data/out/gaze_'+video+'_'+str(timestamp)+'_'+str(cropSize)+'.tiff',crop)
+						imsave('data/out/gaze_'+video+'_'+str(round(timestamp))+'_'+str(cropSize)+'.tiff',crop)
 
 
 
