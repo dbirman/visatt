@@ -14,6 +14,8 @@ Liu, N., Han, J., Zhang, D., Wen, S., & Liu, T. (2015, June). Predicting eye fix
 
 # initial data
 
+Imagenet: http://image-net.org/challenges/LSVRC/2012/index
+
 Download from: http://www.inb.uni-luebeck.de/fileadmin/files/MITARBEITER/Dorr/EyeMovementDataSet.html
 
 Video frames with eye tracking
